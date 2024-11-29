@@ -10,11 +10,12 @@ OUTPUT_DIR="${YEAR}/src/bin/day${DAY}"
 mkdir -p "${OUTPUT_DIR}"
 
 # Fetch the main page and extract the first <code> block
-curl -s -H "Cookie: session=${AOC_SESSION}" "${BASE_URL}" | \
+curl -s -H "Cookie: session=${SESSION_COOKIE}" "${BASE_URL}" | \
     awk 'BEGIN { in_code=0 }
         /<code>/ { in_code=1; sub(/.*<code>/, ""); }
         /<\/code>/ { in_code=0; sub(/<\/code>.*/, ""); print; exit }
-        { if (in_code) print }' > "${OUTPUT_DIR}/sample.txt"
+        { if (in_code) print }' | \
+    awk '{ if (NR == 1) buffer = $0; else buffer = buffer "\n" $0 } END { sub(/\n$/, "", buffer); print buffer }' > "${OUTPUT_DIR}/sample.txt"
 
 if [[ -s "${OUTPUT_DIR}/sample.txt" ]]; then
     echo "Sample text saved to ${OUTPUT_DIR}/sample.txt"
