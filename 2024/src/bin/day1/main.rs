@@ -43,10 +43,10 @@ impl Solution for Day1 {
 
     fn part_a(input: Self::Parsed) -> anyhow::Result<Self::Answer> {
         let (a, b) = input;
-        let sorted_a = a.iter().enumerate().sorted_unstable_by_key(|(_, &val)| val);
+        let sorted_a = a.iter().sorted();
         Ok(sorted_a
-            .zip(b.iter().enumerate().sorted_unstable_by_key(|(_, &val)| val))
-            .map(|(a, b)| a.1.abs_diff(*b.1) as u64)
+            .zip(b.iter().sorted())
+            .map(|(a, b)| a.abs_diff(*b) as u64)
             .sum())
     }
 
