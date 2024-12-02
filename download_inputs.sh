@@ -10,7 +10,7 @@ OUTPUT_DIR="${YEAR}/src/bin/day${DAY}"
 mkdir -p "${OUTPUT_DIR}"
 
 # Fetch the main page and extract the first <code> block
-curl -s -H "Cookie: session=${SESSION_COOKIE}" "${BASE_URL}" | \
+curl -s -H "Cookie: session=${AOC_SESSION}" "${BASE_URL}" | \
     awk 'BEGIN { in_code=0 }
         /<code>/ { in_code=1; sub(/.*<code>/, ""); }
         /<\/code>/ { in_code=0; sub(/<\/code>.*/, ""); print; exit }
