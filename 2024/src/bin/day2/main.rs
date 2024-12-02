@@ -31,20 +31,29 @@ impl Solution<Self> for Day2 {
         Ok(input
             .iter()
             .filter(|report| {
-                if is_safe(report) {
-                    return true;
-                }
-
-                for i in 0..report.len() {
-                    let mut clone = report.to_vec().clone();
-                    clone.remove(i);
-
-                    if is_safe(&clone) {
-                        return true;
+                let mut increasing: Option<bool> = None;
+                let to_remove = report.windows(2).position(|window| {
+                    let diff = window[1].abs_diff(window[0]);
+                    if increasing == None {
+                        increasing = Some(window[0] < window[1]);
                     }
+                    let allowed_change = match increasing {
+                        Some(true) => window[0] < window[1],
+                        Some(false) => window[0] > window[1],
+                        None => panic!("Set increasing flag"),
+                    };
+                    diff == 0 || diff > 3 || !allowed_change
+                });
+                if let Some(remove_index) = to_remove {
+                    let mut clone_first = report.to_vec().clone();
+                    let mut clone_second = report.to_vec().clone();
+                    let mut clone_third = report.to_vec().clone();
+                    clone_first.remove(remove_index.saturating_sub(1));
+                    clone_second.remove(remove_index);
+                    clone_third.remove(remove_index + 1);
+                    return is_safe(&clone_first) || is_safe(&clone_second) || is_safe(&clone_third);
                 }
-
-                false
+                to_remove.is_none()
             })
             .count() as u64)
     }
