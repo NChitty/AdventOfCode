@@ -1,18 +1,14 @@
 use std::collections::HashMap;
 
-use aoc_2024::{aoc, Solution};
+use aoc_2024::*;
 use itertools::Itertools;
 
 aoc!(Day1);
 
-impl Solution for Day1 {
+impl Solution<Day1> for Day1 {
     type Parsed = (Vec<u64>, Vec<u64>);
 
     type Answer = u64;
-
-    const INPUT: &'static str = include_str!("input.txt");
-
-    const SAMPLE_INPUT: &'static str = include_str!("sample.txt");
 
     const SAMPLE_ANSWER_A: Self::Answer = 11;
 

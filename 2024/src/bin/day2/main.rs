@@ -1,16 +1,12 @@
-use aoc_2024::{aoc, Solution};
+use aoc_2024::*;
 use itertools::Itertools;
 
 aoc!(Day2);
 
-impl Solution for Day2 {
+impl Solution<Self> for Day2 {
     type Parsed = Vec<Vec<u64>>;
 
     type Answer = u64;
-
-    const INPUT: &'static str = include_str!("input.txt");
-
-    const SAMPLE_INPUT: &'static str = include_str!("sample.txt");
 
     const SAMPLE_ANSWER_A: Self::Answer = 2;
 

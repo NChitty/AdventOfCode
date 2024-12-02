@@ -1,10 +1,13 @@
 use std::fmt::{Debug, Display};
 
-pub trait Solution {
-    type Parsed: Debug + Clone;
-    type Answer: Debug + Display + PartialEq;
+pub trait SolutionData {
     const INPUT: &'static str;
     const SAMPLE_INPUT: &'static str;
+}
+
+pub trait Solution<T: SolutionData> {
+    type Parsed: Debug + Clone;
+    type Answer: Debug + Display + PartialEq;
     const SAMPLE_ANSWER_A: Self::Answer;
     const SAMPLE_ANSWER_B: Self::Answer;
 
@@ -22,26 +25,26 @@ pub trait Solution {
 
     fn test_part_a() -> anyhow::Result<()> {
         assert_eq!(
-            Self::parse(Self::SAMPLE_INPUT).and_then(Self::part_a_test)?,
+            Self::parse(T::SAMPLE_INPUT).and_then(Self::part_a_test)?,
             Self::SAMPLE_ANSWER_A
         );
-        let shared = Self::parse(Self::INPUT)?;
+        let shared = Self::parse(T::INPUT)?;
         println!("a: {}", Self::part_a(shared)?);
         Ok(())
     }
 
     fn test_part_b() -> anyhow::Result<()> {
         assert_eq!(
-            Self::parse(Self::SAMPLE_INPUT).and_then(Self::part_b_test)?,
+            Self::parse(T::SAMPLE_INPUT).and_then(Self::part_b_test)?,
             Self::SAMPLE_ANSWER_B
         );
-        let shared = Self::parse(Self::INPUT)?;
+        let shared = Self::parse(T::INPUT)?;
         println!("b: {}", Self::part_b(shared)?);
         Ok(())
     }
 
     fn main() -> anyhow::Result<()> {
-        let input = time("Parse", || Self::parse(Self::INPUT))?;
+        let input = time("Parse", || Self::parse(T::INPUT))?;
         let arg = std::env::args().nth(1);
         match arg.as_deref() {
             Some("a") => {
@@ -74,6 +77,11 @@ fn time<T>(tag: &str, f: impl FnOnce() -> T) -> T {
 macro_rules! aoc {
     ($day:ident) => {
         struct $day;
+
+        impl SolutionData for $day {
+            const INPUT: &'static str = include_str!("input.txt");
+            const SAMPLE_INPUT: &'static str = include_str!("sample.txt");
+        }
 
         #[cfg(test)]
         mod tests {
