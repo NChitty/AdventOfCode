@@ -1,3 +1,5 @@
+use std::array::IntoIter;
+
 // pub mod signed;
 pub mod unsigned;
 
@@ -10,6 +12,10 @@ pub enum Direction {
 }
 
 impl Direction {
+    pub fn iter() -> IntoIter<Direction, 4> {
+        [Direction::Up, Direction::Right, Direction::Down, Direction::Left].into_iter()
+    }
+
     pub fn scan(
         self,
         position: (usize, usize),
