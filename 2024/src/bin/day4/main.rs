@@ -1,17 +1,7 @@
 use aoc_2024::*;
+use dimensions_2::unsigned::{Dimension, Point};
 use itertools::Itertools;
 
-const DIRECTIONS: [(isize, isize); 8] = [
-    (-1, -1),
-    (1, 1),
-    (-1, 1),
-    (1, -1),
-    (0, 1),
-    (0, -1),
-    (1, 0),
-    (-1, 0),
-];
-const X_DIRECTIONS: [(isize, isize); 4] = [(1, 1), (-1, -1), (-1, 1), (1, -1)];
 const XMAS: &str = "XMAS";
 const MAS: &str = "MAS";
 
@@ -31,21 +21,20 @@ impl Solution<Self> for Day4 {
     }
 
     fn part_a(input: Self::Parsed) -> anyhow::Result<Self::Answer> {
-        let y_range = 0..input.len();
-        let x_range = 0..input[0].len();
-        let mut candidates: Vec<(usize, usize)> = Vec::new();
+        let dimension = Dimension::new(input[0].len(), input.len());
+        let mut candidates: Vec<Point> = Vec::new();
         for (y, row) in input.iter().enumerate() {
             for (x, &character) in row.iter().enumerate() {
                 if character == 'X' {
-                    candidates.push((x, y));
+                    candidates.push(Point::new(x, y));
                 }
             }
         }
         Ok(candidates
             .iter()
             .map(|start_pos| {
-                let remaining_directions = DIRECTIONS
-                    .iter()
+                let remaining_directions = Diagonals::
+                    iter()
                     .filter(|&&direction| {
                         let (final_x, overflow_x) =
                             start_pos.0.overflowing_add_signed(direction.0 * 3);
