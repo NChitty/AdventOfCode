@@ -27,7 +27,7 @@ impl Solution<Self> for Day5 {
             .collect_vec();
         let updates: Vec<Vec<u64>> = input
             .lines()
-            .take_while_inclusive(|&line| line != "\n")
+            .skip_while(|&line| line != "")
             .into_iter()
             .map(|update| {
                 update
