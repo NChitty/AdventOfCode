@@ -1,5 +1,7 @@
 use std::fmt::{Debug, Display};
 
+pub mod dimensions_2;
+
 pub trait SolutionData {
     const INPUT: &'static str;
     const SAMPLE_INPUT: &'static str;
