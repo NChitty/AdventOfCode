@@ -51,10 +51,11 @@ impl Solution<Self> for Day5 {
 
     fn part_b(input: Self::Parsed) -> anyhow::Result<Self::Answer> {
         let (page_order, updates) = input;
+        let lookup = page_order.clone().into_iter().into_group_map();
         Ok(updates
             .iter()
             .filter(|update| !is_correctly_ordered(update, &page_order))
-            .map(|update| fix(update, &page_order))
+            .map(|update| fix(update, &lookup))
             .map(|update| get_middle(&update))
             .sum())
     }
@@ -82,19 +83,20 @@ fn get_middle(update: &[u64]) -> u64 {
     update[update.len() / 2]
 }
 
-fn fix(update: &[u64], orders: &[(u64, u64)]) -> Vec<u64> {
-    let lookup = orders.to_vec().into_iter().into_group_map();
+fn fix(update: &[u64], lookup: &HashMap<u64, Vec<u64>>) -> Vec<u64> {
     update
         .to_vec()
         .into_iter()
-        .sorted_unstable_by(|a, b| {
-            if let Some(before) = lookup.get(a) {
-                return match before.contains(b) {
-                    true => std::cmp::Ordering::Less,
-                    false => std::cmp::Ordering::Equal,
-                };
-            }
-            std::cmp::Ordering::Equal
-        })
+        .sorted_unstable_by(|a, b| ordering(a, b, lookup))
         .collect_vec()
+}
+
+fn ordering(a: &u64, b: &u64, lookup: &HashMap<u64, Vec<u64>>) -> std::cmp::Ordering {
+    if let Some(before) = lookup.get(a) {
+        return match before.contains(b) {
+            true => std::cmp::Ordering::Less,
+            false => std::cmp::Ordering::Equal,
+        };
+    }
+    std::cmp::Ordering::Equal
 }
