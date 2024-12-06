@@ -1,4 +1,4 @@
-use std::ops::Add;
+use std::ops::{Add, AddAssign};
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct Point {
@@ -35,6 +35,13 @@ impl Add<(isize, isize)> for Point {
             x: self.x.wrapping_add_signed(rhs.0),
             y: self.y.wrapping_add_signed(rhs.1),
         }
+    }
+}
+
+impl AddAssign<(isize, isize)> for Point {
+    fn add_assign(&mut self, rhs: (isize, isize)) {
+        self.x = self.x.wrapping_add_signed(rhs.0);
+        self.y = self.y.wrapping_add_signed(rhs.1);
     }
 }
 

@@ -1,19 +1,8 @@
 use aoc_2024::*;
+use dimensions_2::{extended::Diagonals, unsigned::{Dimension, Point}};
 use itertools::Itertools;
 
-const DIRECTIONS: [(isize, isize); 8] = [
-    (-1, -1),
-    (1, 1),
-    (-1, 1),
-    (1, -1),
-    (0, 1),
-    (0, -1),
-    (1, 0),
-    (-1, 0),
-];
-const X_DIRECTIONS: [(isize, isize); 4] = [(1, 1), (-1, -1), (-1, 1), (1, -1)];
 const XMAS: &str = "XMAS";
-const MAS: &str = "MAS";
 
 aoc!(Day4);
 
@@ -31,28 +20,22 @@ impl Solution<Self> for Day4 {
     }
 
     fn part_a(input: Self::Parsed) -> anyhow::Result<Self::Answer> {
-        let y_range = 0..input.len();
-        let x_range = 0..input[0].len();
-        let mut candidates: Vec<(usize, usize)> = Vec::new();
+        let dimension = Dimension::new(input[0].len(), input.len());
+        let mut candidates: Vec<Point> = Vec::new();
         for (y, row) in input.iter().enumerate() {
             for (x, &character) in row.iter().enumerate() {
                 if character == 'X' {
-                    candidates.push((x, y));
+                    candidates.push(Point::new(x, y));
                 }
             }
         }
         Ok(candidates
             .iter()
             .map(|start_pos| {
-                let remaining_directions = DIRECTIONS
-                    .iter()
-                    .filter(|&&direction| {
-                        let (final_x, overflow_x) =
-                            start_pos.0.overflowing_add_signed(direction.0 * 3);
-                        let (final_y, overflow_y) =
-                            start_pos.1.overflowing_add_signed(direction.1 * 3);
-                        (!overflow_x && x_range.contains(&final_x))
-                            && (!overflow_y && y_range.contains(&final_y))
+                let remaining_directions = Diagonals::iter()
+                    .filter(|direction| {
+                        let final_point = *start_pos + (direction.delta().0 * 3, direction.delta().1 * 3);
+                        dimension.is_within_bounds_exclusive(final_point)
                     })
                     .collect_vec();
                 (start_pos, remaining_directions)
@@ -63,9 +46,9 @@ impl Solution<Self> for Day4 {
                     let mut cur_pos = pos.clone();
                     let mut word = "".to_string();
                     for _ in 0..4 {
-                        word.push(input[cur_pos.1][cur_pos.0]);
-                        cur_pos.0 = cur_pos.0.saturating_add_signed(direction.0);
-                        cur_pos.1 = cur_pos.1.saturating_add_signed(direction.1);
+                        let (x, y) = cur_pos.get();
+                        word.push(input[y][x]);
+                        cur_pos += direction.delta();
                     }
                     if word == XMAS {
                         words += 1;
@@ -77,67 +60,35 @@ impl Solution<Self> for Day4 {
     }
 
     fn part_b(input: Self::Parsed) -> anyhow::Result<Self::Answer> {
-        let y_range = 0..input.len();
-        let x_range = 0..input[0].len();
-        let mut candidates: Vec<(usize, usize)> = Vec::new();
+        let dimension = Dimension::new(input[0].len(), input.len());
+        let mut candidates: Vec<Point> = Vec::new();
         for (y, row) in input.iter().enumerate() {
             for (x, &character) in row.iter().enumerate() {
                 if character == 'A' {
-                    candidates.push((x, y));
+                    candidates.push(Point::new(x, y));
                 }
             }
         }
-        let pos_pos = X_DIRECTIONS[0];
-        let neg_neg = X_DIRECTIONS[1];
-        let neg_pos = X_DIRECTIONS[2];
-        let pos_neg = X_DIRECTIONS[3];
 
         Ok(candidates
             .iter()
             .filter(|pos| {
-                let bottom_left = (
-                    pos.0.overflowing_add_signed(neg_neg.0),
-                    pos.1.overflowing_add_signed(neg_neg.1),
-                );
-                let bottom_right = (
-                    pos.0.overflowing_add_signed(pos_neg.0),
-                    pos.1.overflowing_add_signed(pos_neg.1),
-                );
-                let top_right = (
-                    pos.0.overflowing_add_signed(pos_pos.0),
-                    pos.1.overflowing_add_signed(pos_pos.1),
-                );
-                let top_left = (
-                    pos.0.overflowing_add_signed(neg_pos.0),
-                    pos.1.overflowing_add_signed(neg_pos.1),
-                );
-                if bottom_left.0 .1
-                    || bottom_left.1 .1
-                    || bottom_right.0 .1
-                    || bottom_right.1 .1
-                    || top_left.0 .1
-                    || top_left.1 .1
-                    || top_right.0 .1
-                    || top_right.1 .1
-                {
-                    return false;
-                }
-                if !x_range.contains(&bottom_left.0 .0)
-                    || !y_range.contains(&bottom_left.1 .0)
-                    || !x_range.contains(&bottom_right.0 .0)
-                    || !y_range.contains(&bottom_right.1 .0)
-                    || !x_range.contains(&top_left.0 .0)
-                    || !y_range.contains(&top_left.1 .0)
-                    || !x_range.contains(&top_right.0 .0)
-                    || !y_range.contains(&top_right.1 .0)
-                {
-                    return false;
+                let bottom_left = **pos + Diagonals::DownLeft.delta();
+                let bottom_right = **pos + Diagonals::DownRight.delta();
+                let top_right = **pos + Diagonals::UpRight.delta();
+                let top_left = **pos + Diagonals::UpLeft.delta();
+
+                if !dimension.is_within_bounds_exclusive(bottom_left)
+                    || !dimension.is_within_bounds_exclusive(bottom_right)
+                    || !dimension.is_within_bounds_exclusive(top_left)
+                    || !dimension.is_within_bounds_exclusive(top_right) {
+                        return false;
                 }
 
-                let bottom_left = input[bottom_left.1.0][bottom_left.0.0];
-                let bottom_right = input[bottom_right.1.0][bottom_right.0.0];
-                let top_left = input[top_left.1.0][top_left.0.0];
-                let top_right = input[top_right.1.0][top_right.0.0];
+                let bottom_left = input[bottom_left.get().1][bottom_left.get().0];
+                let bottom_right = input[bottom_right.get().1][bottom_right.get().0];
+                let top_left = input[top_left.get().1][top_left.get().0];
+                let top_right = input[top_right.get().1][top_right.get().0];
 
                 match ((bottom_left, top_right), (bottom_right, top_left)) {
                     (('M', 'S'), ('M', 'S')) => true,

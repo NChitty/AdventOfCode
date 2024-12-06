@@ -1,3 +1,5 @@
+use std::array::IntoIter;
+
 // pub mod signed;
 pub mod unsigned;
 
@@ -10,6 +12,16 @@ pub enum Direction {
 }
 
 impl Direction {
+    pub fn iter() -> IntoIter<Direction, 4> {
+        [
+            Direction::Up,
+            Direction::Right,
+            Direction::Down,
+            Direction::Left,
+        ]
+        .into_iter()
+    }
+
     pub fn scan(
         self,
         position: (usize, usize),
@@ -26,7 +38,7 @@ impl Direction {
         }
     }
 
-    pub fn deltas(&self) -> (isize, isize) {
+    pub fn delta(&self) -> (isize, isize) {
         match self {
             Direction::Up => (0, -1),
             Direction::Down => (0, 1),
@@ -54,3 +66,41 @@ impl Direction {
     }
 }
 
+pub mod extended {
+    use std::vec::IntoIter;
+
+    use itertools::Itertools;
+
+    use super::Direction;
+
+    pub enum Diagonals {
+        Cardinal(Direction),
+        UpRight,
+        UpLeft,
+        DownRight,
+        DownLeft,
+    }
+
+    impl Diagonals {
+        pub fn delta(&self) -> (isize, isize) {
+            match self {
+                Diagonals::Cardinal(dir) => dir.delta(),
+                Diagonals::UpRight => (1, -1),
+                Diagonals::UpLeft => (-1, -1),
+                Diagonals::DownRight => (1, 1),
+                Diagonals::DownLeft => (-1, 1),
+            }
+        }
+
+        pub fn iter() -> IntoIter<Diagonals> {
+            let mut vec = Direction::iter()
+                .map(|direction| Diagonals::Cardinal(direction))
+                .collect_vec();
+            vec.push(Diagonals::UpLeft);
+            vec.push(Diagonals::UpRight);
+            vec.push(Diagonals::DownLeft);
+            vec.push(Diagonals::DownRight);
+            vec.into_iter()
+        }
+    }
+}
