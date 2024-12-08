@@ -44,7 +44,7 @@ impl Solution<Self> for Day7 {
     fn part_a(input: Self::Parsed) -> anyhow::Result<Self::Answer> {
         Ok(input
             .iter()
-            .filter(|(target, operators)| brute_force(*target, operators))
+            .filter(|(target, operators)| recursive(Some(*target), operators, operators.len() - 1))
             .map(|(target, _)| target)
             .sum())
     }
@@ -52,83 +52,66 @@ impl Solution<Self> for Day7 {
     fn part_b(input: Self::Parsed) -> anyhow::Result<Self::Answer> {
         Ok(input
             .iter()
-            .filter(|(target, operators)| brute_force_with_concatenation(*target, operators))
+            .filter(|(target, operators)| {
+                recursive_with_concat(Some(*target), operators, operators.len() - 1)
+            })
             .map(|(target, _)| target)
             .sum())
     }
 }
 
-fn brute_force(target: usize, numbers: &[usize]) -> bool {
-    let num_len = numbers.len();
-    if num_len < 2 {
+fn recursive(target: Option<usize>, numbers: &[usize], index: usize) -> bool {
+    let Some(target) = target else {
         return false;
+    };
+    if index == 0 {
+        return numbers[0] == target;
     }
 
-    let num_combinations = 1 << (num_len - 1);
-
-    for i in 0..num_combinations {
-        let mut result = numbers[0];
-
-        for (j, &num) in numbers.iter().enumerate().skip(1) {
-            if (i >> (j - 1)) & 1 == 1 {
-                result += num;
-            } else {
-                result *= num;
-            }
-        }
-
-        if result == target {
-            return true;
-        }
+    let operand = numbers[index];
+    let mut is_solved = false;
+    if target % operand == 0 {
+        is_solved = recursive(Some(target / operand), numbers, index - 1);
     }
 
-    false
+    return is_solved || recursive(target.checked_sub(operand), numbers, index - 1);
 }
 
-fn brute_force_with_concatenation(target: usize, numbers: &[usize]) -> bool {
-    let n = numbers.len();
-    if n < 2 {
+fn recursive_with_concat(target: Option<usize>, numbers: &[usize], index: usize) -> bool {
+    let Some(target) = target else {
         return false;
+    };
+
+    if index == 0 {
+        return numbers[0] == target;
     }
 
-    let num_combinations = 3usize.pow((n - 1) as u32);
-
-    for combination in 0..num_combinations {
-        let mut result = numbers[0];
-        let mut current_combination = combination;
-
-        for i in 1..n {
-            let operator = current_combination % 3;
-            current_combination /= 3;
-
-            match operator {
-                0 => {
-                    result += numbers[i];
-                }
-                1 => {
-                    result *= numbers[i];
-                }
-                2 => {
-                    if let Some(concat_result) = concatenate_numbers(result, numbers[i]) {
-                        result = concat_result;
-                    } else {
-                        result = usize::MAX;
-                        break;
-                    }
-                }
-                _ => unreachable!(),
-            }
-        }
-
-        if result == target {
-            return true;
-        }
+    let operand = numbers[index];
+    let mut is_solved = false;
+    let operand_len = operand
+        .checked_ilog10()
+        .unwrap_or(0) + 1;
+    let target_len = target
+        .checked_ilog10()
+        .unwrap_or(0) + 1;
+    if target_len > 1 && get_last_digits(target, operand_len) == operand {
+        let deconcat = get_first_digits(target, operand_len);
+        is_solved =
+            recursive_with_concat(Some(deconcat), numbers, index - 1);
     }
 
-    false
+    if target % operand == 0 {
+        is_solved = is_solved || recursive_with_concat(Some(target / operand), numbers, index - 1);
+    }
+
+
+    return is_solved || recursive_with_concat(target.checked_sub(operand), numbers, index - 1);
 }
 
-fn concatenate_numbers(a: usize, b: usize) -> Option<usize> {
-    let concatenated = format!("{}{}", a, b).parse::<usize>().ok()?;
-    Some(concatenated)
+fn get_first_digits(num: usize, num_digits: u32) -> usize {
+    num / 10usize.pow(num_digits)
+}
+
+fn get_last_digits(num: usize, num_digits: u32) -> usize {
+    num % 10usize.pow(num_digits)
 }
