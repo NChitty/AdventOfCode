@@ -4,25 +4,21 @@ use std::{
 };
 
 use aoc_2024::*;
-use dimensions_2::unsigned::{Dimension, Point};
+use dimensions_2::unsigned::{Dimension, Line, Point};
 use itertools::Itertools;
 
 aoc!(Day8);
 
-#[derive(Copy, Clone, Debug, Hash)]
-struct Line {
-    start: Point,
-    end: Point,
+trait ExtendLine {
+    fn double_from_ends(&self) -> Vec<Point>;
+    fn extend_distances(&self, dimensions: Dimension) -> Vec<Point>;
 }
 
-impl Line {
-    fn new(start: Point, end: Point) -> Self {
-        Self { start, end }
-    }
+impl ExtendLine for Line {
 
     fn double_from_ends(&self) -> Vec<Point> {
-        let (x1, y1) = self.start.get();
-        let (x2, y2) = self.end.get();
+        let (x1, y1) = self.get_start().get();
+        let (x2, y2) = self.get_end().get();
 
         let dx = x2 as isize - x1 as isize;
         let dy = y2 as isize - y1 as isize;
@@ -43,37 +39,22 @@ impl Line {
         result
     }
 
-    fn contains_point(&self, point: &Point) -> bool {
-        let (dx1, dy1) = (
-            self.end.get().0 as isize - self.start.get().0 as isize,
-            self.end.get().1 as isize - self.start.get().1 as isize,
-        );
-        let (dx2, dy2) = (
-            point.get().0 as isize - self.start.get().0 as isize,
-            point.get().1 as isize - self.start.get().1 as isize,
-        );
-
-        let cross_product = dy1 * dx2 - dx1 * dy2;
-
-        cross_product == 0
-    }
-
     fn extend_distances(&self, dimensions: Dimension) -> Vec<Point> {
-        let (x1, y1) = self.start.get();
-        let (x2, y2) = self.end.get();
+        let (x1, y1) = self.get_start().get();
+        let (x2, y2) = self.get_end().get();
 
         let dx = x2 as isize - x1 as isize;
         let dy = y2 as isize - y1 as isize;
 
         let mut result = Vec::new();
 
-        let mut antinode = self.start;
+        let mut antinode = self.get_start();
         while dimensions.is_within_bounds_exclusive(antinode) {
             result.push(antinode);
             antinode += (-dx, -dy);
         }
 
-        antinode = self.end;
+        antinode = self.get_end();
         while dimensions.is_within_bounds_exclusive(antinode) {
             result.push(antinode);
             antinode += (dx, dy);
@@ -82,14 +63,6 @@ impl Line {
         result
     }
 }
-
-impl PartialEq for Line {
-    fn eq(&self, other: &Self) -> bool {
-        self.contains_point(&other.start) && self.contains_point(&other.end)
-    }
-}
-
-impl Eq for Line {}
 
 impl Solution<Self> for Day8 {
     type Parsed = (Dimension, HashMap<char, Vec<Point>>);

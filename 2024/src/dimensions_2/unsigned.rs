@@ -1,4 +1,7 @@
-use std::ops::{Add, AddAssign};
+use std::{
+    isize,
+    ops::{Add, AddAssign},
+};
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct Point {
@@ -16,7 +19,7 @@ impl Point {
     }
 }
 
-impl Add<Point> for Point{
+impl Add<Point> for Point {
     type Output = Self;
 
     fn add(self, rhs: Point) -> Self::Output {
@@ -57,8 +60,7 @@ impl Dimension {
     }
 
     pub fn get(&self) -> (usize, usize) {
-        (self.len,
-        self.width)
+        (self.len, self.width)
     }
 
     pub fn get_width(&self) -> usize {
@@ -79,3 +81,53 @@ impl Dimension {
         self.len >= y && self.width >= x
     }
 }
+
+#[derive(Clone, Copy, Debug, Default, Hash)]
+pub struct Line {
+    start: Point,
+    end: Point,
+}
+
+impl Line {
+    pub fn new(start: Point, end: Point) -> Self {
+        Self { start, end }
+    }
+
+    pub fn get_start(self) -> Point {
+        self.start
+    }
+
+    pub fn get_end(self) -> Point {
+        self.end
+    }
+
+    pub fn slope(self) -> isize {
+        (self.end.get().1 as isize - self.start.get().1 as isize)
+            / (self.end.get().0 as isize - self.start.get().0 as isize)
+    }
+
+    pub fn contains_point(&self, point: &Point) -> bool {
+        let (dx1, dy1) = (
+            self.end.get().0 as isize - self.start.get().0 as isize,
+            self.end.get().1 as isize - self.start.get().1 as isize,
+        );
+        let (dx2, dy2) = (
+            point.get().0 as isize - self.start.get().0 as isize,
+            point.get().1 as isize - self.start.get().1 as isize,
+        );
+
+        let cross_product = dy1 * dx2 - dx1 * dy2;
+
+        cross_product == 0
+    }
+}
+
+impl PartialEq for Line {
+    /// A line for AOC purposes is one co-linear with self, this implementation checks this by
+    /// checking if both points in other are on self.
+    fn eq(&self, other: &Self) -> bool {
+        self.contains_point(&other.start) && self.contains_point(&other.end)
+    }
+}
+
+impl Eq for Line {}
