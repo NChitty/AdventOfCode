@@ -4,14 +4,14 @@ use std::{
 };
 
 use aoc_2024::*;
-use dimensions_2::unsigned::{Dimension, Line, Point};
+use dimensions_2::unsigned::{Dimensions, Line, Point};
 use itertools::Itertools;
 
 aoc!(Day8);
 
 trait ExtendLine {
     fn double_from_ends(&self) -> Vec<Point>;
-    fn extend_distances(&self, dimensions: Dimension) -> Vec<Point>;
+    fn extend_distances(&self, dimensions: Dimensions) -> Vec<Point>;
 }
 
 impl ExtendLine for Line {
@@ -39,7 +39,7 @@ impl ExtendLine for Line {
         result
     }
 
-    fn extend_distances(&self, dimensions: Dimension) -> Vec<Point> {
+    fn extend_distances(&self, dimensions: Dimensions) -> Vec<Point> {
         let (x1, y1) = self.get_start().get();
         let (x2, y2) = self.get_end().get();
 
@@ -65,7 +65,7 @@ impl ExtendLine for Line {
 }
 
 impl Solution<Self> for Day8 {
-    type Parsed = (Dimension, HashMap<char, Vec<Point>>);
+    type Parsed = (Dimensions, HashMap<char, Vec<Point>>);
 
     type Answer = usize;
 
@@ -74,7 +74,7 @@ impl Solution<Self> for Day8 {
     const SAMPLE_ANSWER_B: Self::Answer = 34;
 
     fn parse(input: &str) -> anyhow::Result<Self::Parsed> {
-        let dimension = Dimension::new(
+        let dimension = Dimensions::new(
             input.lines().next().expect("No lines").len(),
             input.lines().count(),
         );

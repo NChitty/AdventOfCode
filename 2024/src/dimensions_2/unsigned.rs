@@ -49,12 +49,12 @@ impl AddAssign<(isize, isize)> for Point {
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
-pub struct Dimension {
+pub struct Dimensions {
     width: usize,
     len: usize,
 }
 
-impl Dimension {
+impl Dimensions {
     pub fn new(width: usize, len: usize) -> Self {
         Self { width, len }
     }

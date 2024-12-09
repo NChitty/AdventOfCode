@@ -1,5 +1,5 @@
 use aoc_2024::*;
-use dimensions_2::{extended::Diagonals, unsigned::{Dimension, Point}};
+use dimensions_2::{extended::Diagonals, unsigned::{Dimensions, Point}};
 use itertools::Itertools;
 
 const XMAS: &str = "XMAS";
@@ -20,7 +20,7 @@ impl Solution<Self> for Day4 {
     }
 
     fn part_a(input: Self::Parsed) -> anyhow::Result<Self::Answer> {
-        let dimension = Dimension::new(input[0].len(), input.len());
+        let dimension = Dimensions::new(input[0].len(), input.len());
         let mut candidates: Vec<Point> = Vec::new();
         for (y, row) in input.iter().enumerate() {
             for (x, &character) in row.iter().enumerate() {
@@ -60,7 +60,7 @@ impl Solution<Self> for Day4 {
     }
 
     fn part_b(input: Self::Parsed) -> anyhow::Result<Self::Answer> {
-        let dimension = Dimension::new(input[0].len(), input.len());
+        let dimension = Dimensions::new(input[0].len(), input.len());
         let mut candidates: Vec<Point> = Vec::new();
         for (y, row) in input.iter().enumerate() {
             for (x, &character) in row.iter().enumerate() {

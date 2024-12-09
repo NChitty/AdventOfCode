@@ -1,7 +1,7 @@
 use std::{collections::HashSet, usize};
 
 use aoc_2024::*;
-use dimensions_2::{unsigned::{Dimension, Point}, Direction};
+use dimensions_2::{unsigned::{Dimensions, Point}, Direction};
 
 aoc!(Day6);
 
@@ -16,7 +16,7 @@ impl Guard {
 
     fn step(
         &mut self,
-        dimensions: Dimension,
+        dimensions: Dimensions,
         obstacles: &HashSet<Point>,
         visited: &mut HashSet<Point>,
     ) -> bool {
@@ -34,7 +34,7 @@ impl Guard {
 
     fn step_to_obstacle(
         &mut self,
-        dimensions: Dimension,
+        dimensions: Dimensions,
         obstacles: &HashSet<Point>,
     ) -> bool {
         let range = self.direction.scan(self.position.get(), dimensions.get());
@@ -50,7 +50,7 @@ impl Guard {
 
     fn patrol(
         &mut self,
-        dimensions: Dimension,
+        dimensions: Dimensions,
         obstacles: &HashSet<Point>,
         visited: &mut HashSet<Point>,
     ) {
@@ -59,7 +59,7 @@ impl Guard {
 
     fn detect_loop(
         self,
-        dimensions: Dimension,
+        dimensions: Dimensions,
         obstacles: &HashSet<Point>
     ) -> bool {
         let mut state: HashSet<(Point, Direction)> = HashSet::new();
@@ -74,7 +74,7 @@ impl Guard {
 }
 
 impl Solution<Self> for Day6 {
-    type Parsed = (Dimension, HashSet<Point>, Guard);
+    type Parsed = (Dimensions, HashSet<Point>, Guard);
 
     type Answer = usize;
 
@@ -88,7 +88,7 @@ impl Solution<Self> for Day6 {
             position: Point::default(),
             direction: Direction::Up,
         };
-        let dimensions = Dimension::new(
+        let dimensions = Dimensions::new(
             input.lines().next().expect("No line").len(),
             input.lines().count(),
         );
