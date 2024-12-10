@@ -1,3 +1,8 @@
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap},
+};
+
 use aoc_2024::*;
 use itertools::Itertools;
 
@@ -84,15 +89,32 @@ fn move_files_to_left(mut blocks: Vec<Option<usize>>) -> Vec<Option<usize>> {
         .iter()
         .filter(|option| option.is_some())
         .counts_by(|val| val.unwrap());
+    let mut free_space_map = free_space_heapify(&blocks);
 
     if let Some(&max_file_id) = blocks.iter().flatten().max() {
         for file_id in (0..=max_file_id).rev() {
-            if let Some(start_pos) = blocks.iter().position(|val| *val == Some(file_id)) {
-                let file_size = counts.get(&file_id).expect("No file with id.");
+            // Locate the file's blocks
+            if let Some(start_pos) = blocks.iter().position(|&val| val == Some(file_id)) {
+                let file_size = *counts.get(&file_id).expect("No file with id.");
 
-                if let Some(start) = find_free_space_span(&blocks, *file_size, 0, start_pos) {
-                    for (i, pos) in (start_pos..start_pos+file_size).enumerate() {
-                        blocks[start + i] = blocks[pos].take();
+                // Look for the smallest free span that can fit the file
+                let smallest_span = get_start_of_span(&mut free_space_map, file_size);
+
+                if let Some((size, heap)) = smallest_span {
+                    if let Some(Reverse(start)) = heap.peek() {
+                        if *start >= start_pos {
+                            continue;
+                        }
+                    }
+                    if let Some(Reverse(start)) = heap.pop() {
+                        for (i, pos) in (start_pos..start_pos + file_size).enumerate() {
+                            blocks[start + i] = blocks[pos].take();
+                        }
+                        let remaining_size = size - file_size;
+                        free_space_map
+                            .entry(remaining_size)
+                            .or_insert_with(BinaryHeap::new)
+                            .push(Reverse(start + file_size));
                     }
                 }
             }
@@ -102,31 +124,52 @@ fn move_files_to_left(mut blocks: Vec<Option<usize>>) -> Vec<Option<usize>> {
     blocks
 }
 
-fn find_free_space_span(
-    blocks: &[Option<usize>],
-    size: usize,
-    start: usize,
-    end: usize,
-) -> Option<usize> {
+fn get_start_of_span<'a>(
+    heap_map: &'a mut HashMap<usize, BinaryHeap<Reverse<usize>>>,
+    span_size: usize,
+) -> Option<(usize, &'a mut BinaryHeap<Reverse<usize>>)> {
+    heap_map
+        .iter_mut()
+        .filter(|(size, _)| **size >= span_size)
+        .min_by_key(|(_, heap)| {
+            heap.peek().map_or(usize::MAX, |Reverse(start)| *start) // Use smallest start index
+        })
+        .map(|(size, heap)| (*size, heap)) // Return size and mutable heap reference
+}
+
+fn free_space_heapify(blocks: &Vec<Option<usize>>) -> HashMap<usize, BinaryHeap<Reverse<usize>>> {
+    let mut free_space_map: HashMap<usize, BinaryHeap<Reverse<usize>>> = HashMap::new();
+
     let mut current_size = 0;
     let mut span_start = None;
-
-    for i in start..end {
+    for i in 0..blocks.len() {
         if blocks[i].is_none() {
             if current_size == 0 {
                 span_start = Some(i);
             }
             current_size += 1;
-            if current_size == size {
-                return span_start;
-            }
-        } else {
+        } else if blocks[i].is_some() && span_start.is_some() {
+            free_space_map
+                .entry(current_size)
+                .or_insert_with(BinaryHeap::new)
+                .push(Reverse(span_start.unwrap()));
             current_size = 0;
             span_start = None;
         }
     }
 
-    None
+    if let Some(span_start) = span_start {
+        free_space_map
+            .entry(current_size)
+            .and_modify(|heap| heap.push(Reverse(span_start)))
+            .or_insert_with(|| {
+                let mut heap = BinaryHeap::new();
+                heap.push(Reverse(span_start));
+                heap
+            });
+    }
+
+    free_space_map
 }
 
 fn print_file_space(vec: &[Option<usize>]) {
