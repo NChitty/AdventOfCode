@@ -93,19 +93,12 @@ fn move_files_to_left(mut blocks: Vec<Option<usize>>) -> Vec<Option<usize>> {
 
     if let Some(&max_file_id) = blocks.iter().flatten().max() {
         for file_id in (0..=max_file_id).rev() {
-            // Locate the file's blocks
             if let Some(start_pos) = blocks.iter().position(|&val| val == Some(file_id)) {
                 let file_size = *counts.get(&file_id).expect("No file with id.");
 
-                // Look for the smallest free span that can fit the file
-                let smallest_span = get_start_of_span(&mut free_space_map, file_size);
+                let smallest_span = get_start_of_span(&mut free_space_map, file_size, start_pos);
 
                 if let Some((size, heap)) = smallest_span {
-                    if let Some(Reverse(start)) = heap.peek() {
-                        if *start >= start_pos {
-                            continue;
-                        }
-                    }
                     if let Some(Reverse(start)) = heap.pop() {
                         for (i, pos) in (start_pos..start_pos + file_size).enumerate() {
                             blocks[start + i] = blocks[pos].take();
@@ -127,6 +120,7 @@ fn move_files_to_left(mut blocks: Vec<Option<usize>>) -> Vec<Option<usize>> {
 fn get_start_of_span<'a>(
     heap_map: &'a mut HashMap<usize, BinaryHeap<Reverse<usize>>>,
     span_size: usize,
+    start_index: usize
 ) -> Option<(usize, &'a mut BinaryHeap<Reverse<usize>>)> {
     heap_map
         .iter_mut()
@@ -134,6 +128,7 @@ fn get_start_of_span<'a>(
         .min_by_key(|(_, heap)| {
             heap.peek().map_or(usize::MAX, |Reverse(start)| *start) // Use smallest start index
         })
+        .filter(|(_, heap)| heap.peek().is_some() && heap.peek().unwrap().0 < start_index)
         .map(|(size, heap)| (*size, heap)) // Return size and mutable heap reference
 }
 
