@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use aoc_2024::*;
 use dimensions_2::{unsigned::Point, Direction};
@@ -23,23 +23,24 @@ impl Solution<Self> for Day12 {
     }
 
     fn part_a(input: Self::Parsed) -> anyhow::Result<Self::Answer> {
-        Ok(calculate_regions(input)
+        Ok(calculate_regions(input, count_area_and_perimeter)
             .into_iter()
             .map(|(_letter, area, perimeter)| area * perimeter)
             .sum())
     }
 
     fn part_b(input: Self::Parsed) -> anyhow::Result<Self::Answer> {
-        Ok(calculate_regions_sides(input)
+        Ok(calculate_regions(input, count_area_and_sides)
             .into_iter()
-            .map(|(_letter, area, sides)| {
-                area * sides
-            })
+            .map(|(_letter, area, sides)| area * sides)
             .sum())
     }
 }
 
-fn calculate_regions(grid: Vec<Vec<char>>) -> Vec<(char, usize, usize)> {
+fn calculate_regions(
+    grid: Vec<Vec<char>>,
+    count: fn(&Vec<Vec<char>>, &mut Vec<Vec<bool>>, Point) -> (usize, usize),
+) -> Vec<(char, usize, usize)> {
     let rows = grid.len();
     let cols = grid[0].len();
     let mut visited = vec![vec![false; cols]; rows];
@@ -50,7 +51,7 @@ fn calculate_regions(grid: Vec<Vec<char>>) -> Vec<(char, usize, usize)> {
         for c in 0..cols {
             if !visited[r][c] {
                 let letter = grid[r][c];
-                let (area, perimeter) = flood_fill(&grid, &mut visited, Point::new(c, r));
+                let (area, perimeter) = count(&grid, &mut visited, Point::new(c, r));
                 regions.push((letter, area, perimeter));
             }
         }
@@ -59,27 +60,7 @@ fn calculate_regions(grid: Vec<Vec<char>>) -> Vec<(char, usize, usize)> {
     regions
 }
 
-fn calculate_regions_sides(grid: Vec<Vec<char>>) -> Vec<(char, usize, usize)> {
-    let rows = grid.len();
-    let cols = grid[0].len();
-    let mut visited = vec![vec![false; cols]; rows];
-    let mut regions = Vec::new();
-
-    // Iterate through the grid to find regions
-    for r in 0..rows {
-        for c in 0..cols {
-            if !visited[r][c] {
-                let letter = grid[r][c];
-                let (area, sides) = flood_fill_side_tracking(&grid, &mut visited, Point::new(c, r));
-                regions.push((letter, area, sides));
-            }
-        }
-    }
-
-    regions
-}
-
-fn flood_fill_side_tracking(
+fn count_area_and_sides(
     grid: &Vec<Vec<char>>,
     visited: &mut Vec<Vec<bool>>,
     start: Point,
@@ -116,7 +97,12 @@ fn flood_fill_side_tracking(
 
     let edges = sides.into_iter().into_group_map_by(|(dir, _point)| *dir);
     for dir in Direction::iter() {
-        let vec = edges.get(&dir).unwrap().into_iter().map(|tuple| tuple.1).collect_vec();
+        let vec = edges
+            .get(&dir)
+            .unwrap()
+            .into_iter()
+            .map(|tuple| tuple.1)
+            .collect_vec();
         match dir {
             Direction::Up | Direction::Down => {
                 let (mut prev_x, mut prev_y) = (0usize, 0usize);
@@ -159,7 +145,11 @@ fn flood_fill_side_tracking(
     (area, sides_count)
 }
 
-fn flood_fill(grid: &Vec<Vec<char>>, visited: &mut Vec<Vec<bool>>, start: Point) -> (usize, usize) {
+fn count_area_and_perimeter(
+    grid: &Vec<Vec<char>>,
+    visited: &mut Vec<Vec<bool>>,
+    start: Point,
+) -> (usize, usize) {
     let rows = grid.len();
     let cols = grid[0].len();
     let mut stack = vec![start];
