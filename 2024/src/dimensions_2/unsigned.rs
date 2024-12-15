@@ -60,7 +60,7 @@ impl Dimensions {
     }
 
     pub fn get(&self) -> (usize, usize) {
-        (self.len, self.width)
+        (self.width, self.len)
     }
 
     pub fn get_width(&self) -> usize {
