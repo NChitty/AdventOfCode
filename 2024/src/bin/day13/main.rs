@@ -20,7 +20,7 @@ impl Solution<Self> for Day13 {
 
     const SAMPLE_ANSWER_A: Self::Answer = 480;
 
-    const SAMPLE_ANSWER_B: Self::Answer = 0;
+    const SAMPLE_ANSWER_B: Self::Answer = 875318608908;
 
     fn parse(input: &str) -> anyhow::Result<Self::Parsed> {
         let mut entries = Vec::new();

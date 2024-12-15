@@ -13,7 +13,7 @@ impl Solution<Self> for Day11 {
 
     const SAMPLE_ANSWER_A: Self::Answer = 55312;
 
-    const SAMPLE_ANSWER_B: Self::Answer = 0;
+    const SAMPLE_ANSWER_B: Self::Answer = 65601038650482;
 
     fn parse(input: &str) -> anyhow::Result<Self::Parsed> {
         input
