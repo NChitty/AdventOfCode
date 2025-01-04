@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashSet, VecDeque},
+    collections::{HashMap, HashSet, VecDeque},
     usize,
 };
 
@@ -52,44 +52,91 @@ impl Solution<Self> for Day16 {
     }
 
     fn part_a(input: Self::Parsed) -> anyhow::Result<Self::Answer> {
-        let distances = djikstras((input.start, Direction::Right), &input.maze);
+        let (distances, _prev) = djikstras((input.start, Direction::Right), &input.maze);
         let (x, y) = input.end.get();
         Ok(distances[y][x])
     }
 
     fn part_b(input: Self::Parsed) -> anyhow::Result<Self::Answer> {
-        todo!()
+        let (_distances, prev) = djikstras((input.start, Direction::Right), &input.maze);
+
+        let mut paths = HashSet::new();
+        let mut queue = vec![input.end];
+        paths.insert(input.end);
+        while let Some(cur) = queue.pop() {
+            if let Some(prev_set) = prev.get(&cur) {
+                prev_set.iter().for_each(|&point| {
+                    if paths.insert(point) {
+                        queue.push(point);
+                    }
+                });
+            }
+        }
+        print_path(&input.maze, &paths);
+        Ok(paths.len())
     }
 }
 
-fn djikstras(start: (Point, Direction), maze: &Vec<Vec<char>>) -> Vec<Vec<usize>> {
+fn djikstras(
+    start: (Point, Direction),
+    maze: &Vec<Vec<char>>,
+) -> (Vec<Vec<usize>>, HashMap<Point, HashSet<Point>>) {
     let mut dist: Vec<Vec<usize>> = vec![vec![usize::MAX; maze[0].len()]; maze.len()];
-    let mut queue: VecDeque<(Point, Direction)> = VecDeque::new();
-    queue.push_back(start);
+    let mut prev: HashMap<Point, HashSet<Point>> = HashMap::new();
+    let mut queue: VecDeque<(Point, Direction, usize)> = VecDeque::new();
+    queue.push_back((start.0, start.1, 0));
     dist[start.0.get().1][start.0.get().0] = 0;
 
     while let Some(cur) = queue.pop_front() {
-        let (x, y) = cur.0.get();
-        let neighbors = [cur.1, cur.1.rotate_left(), cur.1.rotate_right()];
+        let neighbors = [cur.1.rotate_right(), cur.1.rotate_left(), cur.1];
 
         for dir in neighbors {
             let new_point = cur.0 + dir.delta();
             let (nx, ny) = new_point.get();
-            if maze[ny][nx] == '.' || maze[ny][nx] == 'E' {
-                if dir == cur.1 {
-                    if dist[ny][nx] >= dist[y][x] + 1001 {
-                        dist[ny][nx] = dist[y][x] + 1;
-                        queue.push_back((new_point, dir));
+            if maze[ny][nx] != '#' {
+                let new_score = match dir {
+                    _ if dir == cur.1 => cur.2 + 1,
+                    _ => cur.2 + 1001,
+                };
+                if dist[ny][nx] >= new_score {
+                    if dist[ny][nx] == new_score {
+                        prev.entry(new_point)
+                            .and_modify(|set| {
+                                set.clear();
+                                set.insert(cur.0);
+                            })
+                            .or_insert_with(|| {
+                                let mut set = HashSet::new();
+                                set.insert(cur.0);
+                                set
+                            });
+                    } else {
+                        prev.entry(new_point)
+                            .or_insert(HashSet::new())
+                            .insert(cur.0);
                     }
-                } else {
-                    if dist[ny][nx] >= dist[y][x] + 1 {
-                        dist[ny][nx] = dist[y][x] + 1001;
-                        queue.push_back((new_point, dir));
+                    dist[ny][nx] = new_score;
+                    match dir {
+                        _ if dir == cur.1 => queue.push_back((new_point, dir, new_score)),
+                        _ => queue.push_back((new_point, dir, new_score)),
                     }
                 }
             }
         }
     }
 
-    dist
+    (dist, prev)
+}
+
+fn print_path(maze: &Vec<Vec<char>>, paths: &HashSet<Point>) {
+    for (y, row) in maze.iter().enumerate() {
+        for (x, map_char) in row.iter().enumerate() {
+            if paths.contains(&Point::new(x, y)) {
+                print!("O");
+            } else {
+                print!("{}", map_char);
+            }
+        }
+        println!();
+    }
 }

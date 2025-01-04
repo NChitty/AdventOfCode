@@ -64,6 +64,15 @@ impl Direction {
             Direction::Left => Direction::Down,
         }
     }
+
+    pub fn inverse(&self) -> Direction {
+        match self {
+            Direction::Up => Direction::Down,
+            Direction::Right => Direction::Left,
+            Direction::Down => Direction::Up,
+            Direction::Left => Direction::Right,
+        }
+    }
 }
 
 pub mod extended {
