@@ -52,27 +52,26 @@ impl Solution<Self> for Day16 {
     }
 
     fn part_a(input: Self::Parsed) -> anyhow::Result<Self::Answer> {
-        let (distances, _prev) = djikstras((input.start, Direction::Right), &input.maze);
+        let (distances, _prev) = djikstras((input.start, Direction::Right), &input.maze, input.end);
         let (x, y) = input.end.get();
         Ok(distances[y][x])
     }
 
     fn part_b(input: Self::Parsed) -> anyhow::Result<Self::Answer> {
-        let (_distances, prev) = djikstras((input.start, Direction::Right), &input.maze);
+        let (_distances, prev) = djikstras((input.start, Direction::Right), &input.maze, input.end);
 
         let mut paths = HashSet::new();
-        let mut queue = vec![input.end];
+        let mut queue = vec![(input.end, Direction::Up)];
         paths.insert(input.end);
         while let Some(cur) = queue.pop() {
             if let Some(prev_set) = prev.get(&cur) {
-                prev_set.iter().for_each(|&point| {
-                    if paths.insert(point) {
-                        queue.push(point);
-                    }
-                });
+                for &(point, direction) in prev_set {
+                    paths.insert(point);
+                    queue.push((point, direction));
+                }
             }
         }
-        print_path(&input.maze, &paths);
+        // print_path(&input.maze, &paths);
         Ok(paths.len())
     }
 }
@@ -80,9 +79,13 @@ impl Solution<Self> for Day16 {
 fn djikstras(
     start: (Point, Direction),
     maze: &Vec<Vec<char>>,
-) -> (Vec<Vec<usize>>, HashMap<Point, HashSet<Point>>) {
+    end: Point,
+) -> (
+    Vec<Vec<usize>>,
+    HashMap<(Point, Direction), HashSet<(Point, Direction)>>,
+) {
     let mut dist: Vec<Vec<usize>> = vec![vec![usize::MAX; maze[0].len()]; maze.len()];
-    let mut prev: HashMap<Point, HashSet<Point>> = HashMap::new();
+    let mut prev: HashMap<(Point, Direction), HashSet<(Point, Direction)>> = HashMap::new();
     let mut queue: VecDeque<(Point, Direction, usize)> = VecDeque::new();
     queue.push_back((start.0, start.1, 0));
     dist[start.0.get().1][start.0.get().0] = 0;
@@ -98,24 +101,35 @@ fn djikstras(
                     _ if dir == cur.1 => cur.2 + 1,
                     _ => cur.2 + 1001,
                 };
+
+                if dist[end.get().1][end.get().0] < new_score && maze[ny][nx] != 'E' {
+                    continue;
+                }
+
+                if new_score < dist[ny][nx] {
+                    prev.entry((new_point, dir))
+                        .and_modify(|set| {
+                            set.clear();
+                            set.insert((cur.0, cur.1));
+                        })
+                        .or_insert_with(|| {
+                            let mut set = HashSet::new();
+                            set.insert((cur.0, cur.1));
+                            set
+                        });
+                } else {
+                    prev.entry((new_point, dir)).and_modify(|set| {
+                        set.insert((cur.0, cur.1));
+                    });
+                }
+
                 if dist[ny][nx] >= new_score {
-                    if dist[ny][nx] == new_score {
-                        prev.entry(new_point)
-                            .and_modify(|set| {
-                                set.clear();
-                                set.insert(cur.0);
-                            })
-                            .or_insert_with(|| {
-                                let mut set = HashSet::new();
-                                set.insert(cur.0);
-                                set
-                            });
-                    } else {
-                        prev.entry(new_point)
-                            .or_insert(HashSet::new())
-                            .insert(cur.0);
-                    }
                     dist[ny][nx] = new_score;
+
+                    if maze[ny][nx] == 'E' {
+                        continue;
+                    }
+
                     match dir {
                         _ if dir == cur.1 => queue.push_back((new_point, dir, new_score)),
                         _ => queue.push_back((new_point, dir, new_score)),

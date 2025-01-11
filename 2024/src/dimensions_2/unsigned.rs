@@ -3,6 +3,8 @@ use std::{
     ops::{Add, AddAssign},
 };
 
+use super::Direction;
+
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct Point {
     x: usize,
@@ -38,6 +40,14 @@ impl Add<(isize, isize)> for Point {
             x: self.x.wrapping_add_signed(rhs.0),
             y: self.y.wrapping_add_signed(rhs.1),
         }
+    }
+}
+
+impl Add<Direction> for Point {
+    type Output = Self;
+
+    fn add(self, rhs: Direction) -> Self::Output {
+        self + rhs.delta()
     }
 }
 
